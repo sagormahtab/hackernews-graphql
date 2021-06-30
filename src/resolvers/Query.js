@@ -3,6 +3,14 @@ const feed = (parent, args, context, info) => {
   return allLinks;
 };
 
+const link = async (parent, args, context) => {
+  const desiredLink = context.prisma.link.findFirst({
+    where: { id: parseInt(args.id) },
+  });
+  return desiredLink;
+};
+
 module.exports = {
   feed,
+  link,
 };
