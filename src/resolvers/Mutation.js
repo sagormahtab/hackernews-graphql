@@ -38,16 +38,29 @@ async function login(parent, args, context, info) {
 async function post(parent, args, context, info) {
   const { userId } = context;
 
-  return await context.prisma.link.create({
+  const newLink = await context.prisma.link.create({
     data: {
       url: args.url,
       description: args.description,
       postedBy: { connect: { id: userId } },
     },
   });
+  context.pubsub.publish("NEW_LINK", newLink);
+
+  return newLink;
 }
 
 async function updateLink(parent, args, context) {
+  const userId = getUserId(context);
+  const link = context.prisma.link.findFirst({
+    where: {
+      postedById: userId,
+    },
+  });
+  if (!Boolean(link)) {
+    throw new Error(`This link is not created by user ${userId}`);
+  }
+
   const data = {};
 
   if (args.url) {
@@ -58,17 +71,52 @@ async function updateLink(parent, args, context) {
   }
 
   const desiredLink = context.prisma.link.update({
-    where: { id: parseInt(args.id) },
+    where: { id: Number(args.id) },
     data: data,
   });
   return desiredLink;
 }
 
 async function deleteLink(parent, args, context) {
+  const userId = getUserId(context);
+  const link = context.prisma.link.findFirst({
+    where: {
+      postedById: userId,
+    },
+  });
+  if (!Boolean(link)) {
+    throw new Error(`This link is not created by user ${userId}`);
+  }
+
   const desiredLink = context.prisma.link.delete({
-    where: { id: parseInt(args.id) },
+    where: { id: Number(args.id) },
   });
   return desiredLink;
+}
+
+async function vote(parent, args, context, info) {
+  const userId = getUserId(context);
+  const vote = await context.prisma.vote.findUnique({
+    where: {
+      linkId_userId: {
+        linkId: Number(args.linkId),
+        userId: userId,
+      },
+    },
+  });
+
+  if (Boolean(vote)) {
+    throw new Error(`Already voted for link ${args.linkId}`);
+  }
+
+  const newVote = context.prisma.vote.create({
+    data: {
+      user: { connect: { id: userId } },
+      link: { connect: { id: Number(args.linkId) } },
+    },
+  });
+  context.pubsub.publish("NEW_VOTE", newVote);
+  return newVote;
 }
 
 module.exports = {
@@ -77,4 +125,5 @@ module.exports = {
   post,
   updateLink,
   deleteLink,
+  vote,
 };
