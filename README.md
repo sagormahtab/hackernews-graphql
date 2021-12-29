@@ -1,8 +1,6 @@
-This hackernews project was done as an exercise by [howtographql](https://www.howtographql.com/)
+# Hackernews Clone
+This project was done primarily targeting to match with the most common features of Hackernews. On the homepage user will find top news. There is also a menu for getting the newest news. Users can also find for any post. Voting feature will be available to the user after log in/sign up.
 
-Technology used:
-
-- apollo server
-- graphql
-- prisma
-- apollo-react
+-	FrontEnd: React, React Router, Apollo Client, GraphQL.
+-	Backend: Apollo Server, GraphQL, JWT, Prisma.
+-	Tools used: Heroku, Visual Studio Code.
